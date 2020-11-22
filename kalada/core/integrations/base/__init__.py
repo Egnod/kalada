@@ -1,0 +1,1 @@
+from kalada.core.integrations.base.http_integration_base import BaseHTTPIntegration

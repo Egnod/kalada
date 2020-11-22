@@ -1,0 +1,18 @@
+database:
+  uri: "mongodb://kalada:123123123@localhost:27017"
+  name: kalada
+
+workers:
+  clients:
+    max: 10
+  kafka:
+    server:
+      uri: "kafka://localhost:9092"
+  producer:
+    request:
+      size:
+        max: 68719476736
+  consumer:
+    fetch:
+      size:
+        max: 2147483647
