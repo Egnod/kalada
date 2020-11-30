@@ -10,4 +10,4 @@ router = APIRouter()
 async def get_currencies_pairs_list() -> CurrenciesPairsSchema:
     currencies_pairs = [await pair.pretty_dump() async for pair in CurrencyPairModel.find({"is_active": True})]
 
-    return {"data": currencies_pairs}
+    return CurrenciesPairsSchema(date=currencies_pairs)

@@ -18,7 +18,7 @@ class RussiaBankProviderRate(BaseCurrencyRateProvider):
     _base_url = "http://www.cbr.ru/scripts/"
 
     currency_pairs_compatibility = {
-        currencies.rub.code: (currencies.usd.code, currencies.eur.code),
+        currencies.rub.code: (currencies.usd.code, currencies.eur.code, currencies.gbp.code),
     }
 
     denomination = {date(year=1998, day=1, month=1): 1000}

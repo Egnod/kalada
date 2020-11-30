@@ -1,42 +1,37 @@
-from http import HTTPStatus
+from datetime import date
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
-from kalada.components.currency.model import CurrencyModel
-from kalada.components.currency_pair.model import CurrencyPairModel
-from kalada.core.integrations.currency_rate import get_provider_by_identity
+from kalada.components.currency_pair_rate.mechanism import CurrencyPairRateMechanism
+from kalada.components.currency_pair_rate.schema import CurrencyPairRate
 
 router = APIRouter()
 
 
-@router.get("/daily")
-async def get_currency_rate_daily(base_currency: str = Query(...), target_currency: str = Query(...)):
-    base_currency = await CurrencyModel.find_one({"iso_code": base_currency})
-    target_currency = await CurrencyModel.find_one({"iso_code": target_currency})
+@router.get("/daily", response_model=CurrencyPairRate)
+async def get_currency_rate_daily(
+    base_currency: str = Query(...), target_currency: str = Query(...)
+) -> CurrencyPairRate:
+    pair_rate = await CurrencyPairRateMechanism(base_currency, target_currency).load()
 
-    if not base_currency or not target_currency:
-        raise HTTPException(HTTPStatus.NOT_FOUND)
+    return CurrencyPairRate(
+        rate=await pair_rate.get_daily(),
+        base_currency=base_currency,
+        target_currency=target_currency,
+        rate_date=date.today(),
+    )
 
-    pair = await CurrencyPairModel.find_one({"base_currency": base_currency.id, "target_currency": target_currency.id})
 
-    if not pair or not pair.is_active:
-        raise HTTPException(HTTPStatus.NOT_FOUND)
+@router.get("/historical", response_model=CurrencyPairRate)
+async def get_currency_rate_historical(
+    base_currency: str = Query(...), target_currency: str = Query(...), rate_date: date = Query(...)
+) -> CurrencyPairRate:
 
-    provider_doc = await pair.rate_provider.fetch()
+    pair_rate = await CurrencyPairRateMechanism(base_currency, target_currency).load()
 
-    provider = get_provider_by_identity(provider_doc.name)
-
-    if not provider:
-        raise HTTPException(HTTPStatus.NOT_FOUND)
-
-    async with provider() as client:
-        if not pair.rate_provider_reverse:
-            rate = await client.get_daily(
-                base_currency.iso_code, target_currency.iso_code, reverse=pair.rate_provider_reverse
-            )
-        else:
-            rate = await client.get_daily(
-                target_currency.iso_code, base_currency.iso_code, reverse=pair.rate_provider_reverse
-            )
-
-    return rate
+    return CurrencyPairRate(
+        rate=await pair_rate.get_by_date(rate_date),
+        base_currency=base_currency,
+        target_currency=target_currency,
+        rate_date=rate_date.isoformat(),
+    )

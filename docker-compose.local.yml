@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  db:
+    hostname: mongodb
+    image: mongo:4.2-bionic
+    command: mongod --port 27017
+    restart: always
+    ports:
+    - 27017:27017
+    env_file:
+      - .env.db
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+
+  kafka-service:
+    image: wurstmeister/kafka
+    restart: always
+    ports:
+    - 9092:9092
+    env_file:
+      - .env.kafka
+    depends_on:
+      - zookeeper
+
+  agents-worker:
+    command: sh -c "sleep 20 && faust -A kalada.core.workers.agents worker --without-web -l info"
+    restart: always
+    hostname: agents-worker
+    env_file:
+      - .env.service
+    build:
+      context: ./
+      dockerfile: deployment/dockerfiles/local.dockerfile
+    volumes:
+      - ./kalada:/kalada
+    depends_on:
+      - kafka-service
+      - db

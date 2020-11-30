@@ -9,6 +9,7 @@ from kalada.components.rate_provider.model import CurrencyRateProviderModel
 from kalada.core.integrations.currencies_iso_4217 import CurrencyProvider
 from kalada.core.integrations.currency_rate import get_all_providers, get_provider_by_currency
 from kalada.core.workers.app import get_app
+from kalada.core.workers.starters import full_grab_for_all_pairs
 
 app = get_app()
 
@@ -95,3 +96,9 @@ async def full_deploy():
     await generate_pairs_combinations.run()
     await collect_currency_rates_providers.run()
     await select_provider_and_activate.run()
+
+
+@app.command()
+async def start_full_grab_for_all_pairs():
+    """Start fill rates for rate timeline for all active currency pairs."""
+    await full_grab_for_all_pairs()

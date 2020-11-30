@@ -1,0 +1,2 @@
+class KaladaException(Exception):
+    pass

@@ -7,6 +7,7 @@ from kalada import __project__
 
 configurator = Sitri(
     config_provider=IndexPriorityStrategy(
-        SystemConfigProvider(prefix=__project__), YamlConfigProvider(default_separator="_", yaml_path="./config.yaml")
+        SystemConfigProvider(prefix=__project__),
+        YamlConfigProvider(default_separator="_", yaml_path="./config.yaml", found_file_error=False),
     )
 )

@@ -1,5 +1,6 @@
 from datetime import date
-from typing import Optional, Union
+from http import HTTPStatus
+from typing import Literal, Optional, Union
 from urllib.parse import urljoin
 
 from iso4217 import Currency as currencies
@@ -28,26 +29,17 @@ class EuropeanBankProvider(BaseCurrencyRateProvider):
         target_currency: str,
         reverse: bool = False,
     ):
-
-        url = urljoin(self._base_url, "latest")
-        response = await self.session.get(url, params={"base": base_currency})
-        data = response.json()
-
-        wallets = data["rates"]
-
-        rates = {}
-
-        for wallet in wallets:
-            rates[wallet] = wallets[wallet]
-
-        return rates[target_currency] if not reverse else (1 / rates[target_currency])
+        return self.get_historical_rate(base_currency, target_currency, "latest", reverse)
 
     async def get_historical_rate(
-        self, base_currency: str, target_currency: str, rate_date: date, reverse: bool = False
+        self, base_currency: str, target_currency: str, rate_date: Union[date, Literal["latest"]], reverse: bool = False
     ) -> Optional[Union[int, float]]:
-        url = urljoin(self._base_url, rate_date.isoformat())
+        url = urljoin(self._base_url, rate_date.isoformat() if isinstance(rate_date, date) else rate_date)
 
         response = await self.session.get(url, params={"base": base_currency})
+
+        if response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND):
+            return None
 
         data = response.json()
 
